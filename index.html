@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow | Professional Productivity</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- CSS Variables & Theming --- */
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-base: #F9FAFB;
+            --bg-surface: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --primary: #6366F1;
+            --primary-hover: #818CF8;
+            --bg-base: #111827;
+            --bg-surface: #1F2937;
+            --text-main: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --border: #374151;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+        .hidden { display: none !important; }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            text-align: center;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: #fff;
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-main);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* --- Landing Page Layout --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        nav { display: flex; gap: 2rem; align-items: center; }
+        nav a { font-weight: 500; transition: color 0.2s; }
+        nav a:hover { color: var(--primary); }
+        
+        .hero {
+            text-align: center;
+            padding: 8rem 5% 6rem;
+            background: linear-gradient(135deg, var(--bg-base) 0%, var(--bg-surface) 100%);
+        }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1.5rem; line-height: 1.2; }
+        .hero p { font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 2.5rem; }
+
+        section { padding: 5rem 5%; }
+        .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 3rem; }
+
+        /* Grid Layouts */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--bg-surface);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { margin-bottom: 1rem; font-size: 1.5rem; }
+        .card p { color: var(--text-muted); }
+
+        /* Pricing Specifics */
+        .price { font-size: 2.5rem; font-weight: bold; margin: 1.5rem 0; color: var(--primary); }
+        .pricing-card ul { margin-bottom: 2rem; }
+        .pricing-card li { margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        .btn-full { width: 100%; }
+        .featured-card {
+            border: 2px solid var(--primary);
+            transform: scale(1.05);
+        }
+        .section-heading { margin-bottom: 1rem; }
+        .activity-list { color: var(--text-muted); }
+        .activity-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .activity-list li:last-child { border-bottom: none; }
+
+        /* FAQ */
+        .faq-item {
+            max-width: 800px;
+            margin: 0 auto 1rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+        .faq-answer {
+            padding: 0 1.5rem 1.5rem;
+            color: var(--text-muted);
+            display: none;
+        }
+        .faq-item.active .faq-answer { display: block; }
+
+        /* --- Dashboard Layout --- */
+        #dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar .logo { margin-bottom: 3rem; padding-left: 1rem; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+        .sidebar-nav button {
+            background: none; border: none; text-align: left; padding: 1rem;
+            border-radius: 8px; color: var(--text-muted); font-weight: 500; cursor: pointer;
+            transition: var(--transition);
+        }
+        .sidebar-nav button:hover, .sidebar-nav button.active {
+            background-color: var(--bg-base); color: var(--primary);
+        }
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; }
+        .topbar {
+            height: 70px;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 2rem;
+            gap: 1.5rem;
+        }
+        
+        .dashboard-content { padding: 2rem; overflow-y: auto; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--bg-surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-card h4 { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: bold; }
+
+        .chart-container {
+            background: var(--bg-surface);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        /* --- Scroll Animations --- */
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header nav { display: none; } /* Simplified for demo */
+            #dashboard { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 1rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Footer styles moved from inline attributes */
+        .footer {
+            text-align: center;
+            padding: 3rem;
+            border-top: 1px solid var(--border);
+            background: transparent;
+        }
+        .footer-text {
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Dashboard heading spacing (moved from inline styles) */
+        .dashboard-title {
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-margin-bottom {
+            margin-bottom: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <header>
+            <div class="logo">TaskFlow</div>
+            <nav>
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+                <button class="btn btn-outline" onclick="toggleTheme()">🌓 Theme</button>
+                <button class="btn btn-primary" onclick="simulateLogin()">Login</button>
+            </nav>
+        </header>
+
+        <section class="hero fade-in">
+            <h1>Manage Your Work,<br>Not Your Tools</h1>
+            <p>The all-in-one productivity suite designed for modern teams. Track tasks, visualize progress, and ship faster.</p>
+            <button class="btn btn-primary" onclick="simulateLogin()">Start Free Trial</button>
+        </section>
+
+        <section id="features">
+            <h2 class="section-title fade-in">Everything You Need</h2>
+            <div class="grid-3">
+                <div class="card fade-in">
+                    <h3>⚡ Lightning Fast</h3>
+                    <p>Built for speed. Navigate through your projects with zero latency and instantly update statuses.</p>
+                </div>
+                <div class="card fade-in">
+                    <h3>📊 Advanced Analytics</h3>
+                    <p>Gain insights into your team's velocity and productivity with beautiful, automated charts.</p>
+                </div>
+                <div class="card fade-in">
+                    <h3>🔒 Enterprise Security</h3>
+                    <p>Your data is encrypted at rest and in transit. Bank-level security for your peace of mind.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pricing">
+            <h2 class="section-title fade-in">Simple, Transparent Pricing</h2>
+            <div class="grid-3">
+                <div class="card pricing-card fade-in">
+                    <h3>Starter</h3>
+                    <div class="price">$0<span>/mo</span></div>
+                    <ul>
+                        <li>Up to 3 projects</li>
+                        <li>Basic analytics</li>
+                        <li>Community support</li>
+                    </ul>
+                    <button type="button" class="btn btn-outline btn-full">Get Started</button>
+                </div>
+                <div class="card pricing-card featured-card fade-in">
+                    <h3>Professional</h3>
+                    <div class="price">$29<span>/mo</span></div>
+                    <ul>
+                        <li>Unlimited projects</li>
+                        <li>Advanced analytics</li>
+                        <li>Priority email support</li>
+                    </ul>
+                    <button type="button" class="btn btn-primary btn-full">Start Free Trial</button>
+                </div>
+                <div class="card pricing-card fade-in">
+                    <h3>Enterprise</h3>
+                    <div class="price">$99<span>/mo</span></div>
+                    <ul>
+                        <li>Custom integrations</li>
+                        <li>Dedicated success manager</li>
+                        <li>24/7 phone support</li>
+                    </ul>
+                    <button type="button" class="btn btn-outline btn-full">Contact Sales</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="faq">
+            <h2 class="section-title fade-in">Frequently Asked Questions</h2>
+            <div class="faq-container fade-in">
+                <div class="faq-item">
+                    <div class="faq-question">Do I need a credit card to sign up? <span>+</span></div>
+                    <div class="faq-answer">No, our 14-day free trial requires no credit card. You only pay if you decide to upgrade.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Can I cancel anytime? <span>+</span></div>
+                    <div class="faq-answer">Yes! There are no long-term contracts. You can cancel your subscription at any time from your dashboard.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Is there a mobile app? <span>+</span></div>
+                    <div class="faq-answer">Our website is fully responsive, and native iOS and Android apps are currently in beta testing.</div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p class="footer-text">&copy; 2026 TaskFlow SaaS. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <div class="sidebar">
+            <div class="logo">TaskFlow</div>
+            <div class="sidebar-nav">
+                <button class="active">Overview</button>
+                <button>Projects</button>
+                <button>Analytics</button>
+                <button>Settings</button>
+            </div>
+            <div class="sidebar-footer">
+                <button type="button" class="btn btn-outline btn-full btn-margin-bottom" onclick="toggleTheme()">🌓 Theme</button>
+                <button type="button" class="btn btn-primary btn-full" onclick="logout()">Log Out</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="topbar">
+                <span>🔔 Notifications</span>
+                <strong id="user-greeting">Welcome, User</strong>
+                <div class="user-avatar">U</div>
+            </div>
+
+            <div class="dashboard-content">
+                <h2 class="dashboard-title">Dashboard Overview</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Tasks Completed</h4>
+                        <div class="value">1,284</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Active Projects</h4>
+                        <div class="value">12</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Storage Used</h4>
+                        <div class="value">4.2 GB</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="section-heading">Activity (Last 7 Days)</h3>
+                    <canvas id="activityChart" height="100"></canvas>
+                </div>
+                
+                <div class="card">
+                    <h3 class="section-heading">Recent Activity</h3>
+                    <ul class="activity-list">
+                        <li>✅ Completed task "Update landing page copy"</li>
+                        <li>📂 Created new project "Q3 Marketing"</li>
+                        <li>💬 Commented on "Fix navbar bug"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const landingPage = document.getElementById('landing-page');
+        const dashboard = document.getElementById('dashboard');
+        const userGreeting = document.getElementById('user-greeting');
+        let chartInstance = null;
+
+        // 1. Theme Management (Local Storage)
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            // Update chart colors if it exists
+            if (chartInstance) renderChart(); 
+        }
+
+        // 2. Authentication Management (Session Storage)
+        function checkAuthStatus() {
+            const user = sessionStorage.getItem('user');
+            if (user) {
+                showDashboard(JSON.parse(user));
+            } else {
+                showLanding();
+            }
+        }
+
+        function simulateLogin() {
+            const mockUser = { name: "Alex Admin", role: "Pro User" };
+            sessionStorage.setItem('user', JSON.stringify(mockUser));
+            showDashboard(mockUser);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('user');
+            showLanding();
+        }
+
+        // 3. View Routing
+        function showDashboard(user) {
+            landingPage.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            userGreeting.innerText = `Welcome, ${user.name}`;
+            window.scrollTo(0,0);
+            renderChart();
+        }
+
+        function showLanding() {
+            dashboard.classList.add('hidden');
+            landingPage.classList.remove('hidden');
+            if (chartInstance) chartInstance.destroy(); // Cleanup canvas
+            window.scrollTo(0,0);
+        }
+
+        // 4. Chart.js Implementation
+        function renderChart() {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const gridColor = isDark ? '#374151' : '#E5E7EB';
+            const textColor = isDark ? '#9CA3AF' : '#6B7280';
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Tasks Completed',
+                        data: [12, 19, 15, 25, 22, 10, 8],
+                        borderColor: '#4F46E5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    },
+                    plugins: { legend: { labels: { color: textColor } } }
+                }
+            });
+        }
+
+        // 5. Scroll Animations (Intersection Observer)
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+
+        // 6. FAQ Accordion Logic
+        document.querySelectorAll('.faq-question').forEach(item => {
+            item.addEventListener('click', () => {
+                const parent = item.parentElement;
+                parent.classList.toggle('active');
+                
+                // Change +/- icon
+                const span = item.querySelector('span');
+                span.innerText = parent.classList.contains('active') ? '-' : '+';
+            });
+        });
+
+        // Initialize App
+        initTheme();
+        checkAuthStatus();
+    </script>
+</body>
+</html>
